@@ -15,6 +15,33 @@ import useFetch from "../../hooks/useFetch";
 import { Context } from "../../utils/context";
 import MoonLoader from "react-spinners/MoonLoader";
 
+const fallbackProduct = {
+  id: 999,
+  attributes: {
+    title: "Sample Product",
+    price: 99,
+    desc: "This is a fallback product.",
+    quantity: 1,
+    img: {
+      data: [
+        {
+          attributes: {
+            url: "https://via.placeholder.com/300",
+          },
+        },
+      ],
+    },
+    categories: {
+      data: [
+        {
+          id: 1,
+          attributes: { title: "Sample Category" },
+        },
+      ],
+    },
+  },
+};
+
 const SingleProduct = () => {
   const [counter, setCounter] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -44,6 +71,11 @@ const SingleProduct = () => {
     }, 1500);
   });
 
+  // Use API product if available, otherwise fallback
+  const product = data?.data?.[0] || fallbackProduct;
+
+  const isOutOfStock = !product?.attributes?.quantity || product?.attributes?.quantity < 1;
+
   return (
     <div className="single__product__container">
       <div className="layout">
@@ -63,19 +95,17 @@ const SingleProduct = () => {
               </div>
             ) : (
               <img
-                src={
-                  data?.data?.[0].attributes?.img?.data?.[0]?.attributes?.url
-                }
+                src={product?.attributes?.img?.data?.[0]?.attributes?.url}
                 alt=""
               />
             )}
           </div>
           <div className="right">
-            <h2>{data?.data?.[0]?.attributes?.title}</h2>
+            <h2>{product?.attributes?.title}</h2>
             <span className="price">
-              &#8377; {data?.data?.[0]?.attributes?.price}
+              &#8377; {product?.attributes?.price}
             </span>
-            <p>{data?.data?.[0]?.attributes?.desc}</p>
+            <p>{product?.attributes?.desc}</p>
             <div className="cart__div">
               <div className="quantity__buttons">
                 <span onClick={() => decCounter()}>-</span>
@@ -87,13 +117,16 @@ const SingleProduct = () => {
                 <h3
                   className="add__to__cart"
                   onClick={() => {
-                    console.log("Adding to cart:", data?.data?.[0], counter);
-                    if (!data?.data?.[0]) return;
-                    handleAddToCart(data.data[0], counter);
+                    if (isOutOfStock) return;
+                    handleAddToCart(product, counter);
                     setCounter(1);
                   }}
+                  style={{
+                    pointerEvents: isOutOfStock ? "none" : "auto",
+                    opacity: isOutOfStock ? 0.5 : 1,
+                  }}
                 >
-                  Add to Cart
+                  {isOutOfStock ? "Out of Stock" : "Add to Cart"}
                 </h3>
               </div>
             </div>
@@ -101,10 +134,7 @@ const SingleProduct = () => {
             <div className="sp__category">
               <div className="sp__title">Category :</div>
               <p className="sp__prod">
-                {
-                  data?.data?.[0]?.attributes?.categories?.data?.[0]?.attributes
-                    ?.title
-                }
+                {product?.attributes?.categories?.data?.[0]?.attributes?.title}
               </p>
             </div>
             <div className="sp__socials">
@@ -122,7 +152,7 @@ const SingleProduct = () => {
         </div>
         <RelatedProducts
           productId={id}
-          categoryId={data?.data?.[0]?.attributes?.categories?.data?.[0]?.id}
+          categoryId={product?.attributes?.categories?.data?.[0]?.id}
         />
       </div>
     </div>
