@@ -25,4 +25,4 @@ src/progress
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
+*.sw?"key.env" 
